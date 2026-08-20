@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080808">
+<title>DOBLA-ME | Karaoke de Doblaje</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="logo" id="homeBtn"><b>D</b> DOBLA<span>-ME</span></button>
+  <nav>
+    <button data-view="home">Inicio</button>
+    <button data-view="play">Jugar</button>
+    <button data-view="library">Biblioteca</button>
+    <button data-view="editor">Crear</button>
+    <button data-view="settings">Ajustes</button>
+  </nav>
+</header>
+
+<main>
+<section class="view active" id="homeView">
+  <div class="hero">
+    <div class="heroText">
+      <small>KARAOKE DE DOBLAJE</small>
+      <h1>Tu voz.<br><em>La escena.</em><br>El espectáculo.</h1>
+      <p>Sube tus escenas, interpreta personajes con el micrófono y compite por la mejor puntuación.</p>
+      <div class="actions">
+        <button class="primary big" data-view="play">▶ JUGAR</button>
+        <button class="secondary big" data-view="editor">＋ CREAR ESCENA</button>
+      </div>
+    </div>
+  </div>
+  <div class="section"><h2>Todo listo para jugar</h2>
+    <div class="cards">
+      <article><b>🎬</b><h3>Tus escenas</h3><p>Video, audio o imagen desde tu dispositivo.</p></article>
+      <article><b>🎙️</b><h3>Tu voz</h3><p>Micrófono y reconocimiento de voz cuando el navegador lo permite.</p></article>
+      <article><b>⭐</b><h3>Puntuación</h3><p>Ritmo, palabras, energía y combos.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="playView">
+  <div class="heading"><div><small>SELECCIÓN</small><h2>Elige una escena</h2></div><button class="primary" data-view="editor">＋ Nueva escena</button></div>
+  <div id="filters" class="filters"></div>
+  <div id="sceneGrid" class="grid"></div>
+</section>
+
+<section class="view" id="gameView">
+  <div class="gameTop">
+    <button class="secondary" id="quitBtn">✕ Salir</button>
+    <div><small id="roundLabel">DIÁLOGO</small><strong id="gameTitle">Escena</strong></div>
+    <b class="score">⭐ <span id="score">0</span></b>
+  </div>
+  <div class="stage">
+    <video id="video" playsinline preload="metadata" controls></video>
+    <img id="image" alt="">
+    <audio id="audio" controls></audio>
+    <div id="stageMessage">Preparando...</div>
+    <div id="countdown" class="countdown hidden">3</div>
+    <div class="mic"><i id="micLed"></i><span id="micText">Micrófono apagado</span></div>
+  </div>
+  <div class="karaoke">
+    <div class="lineMeta"><b id="speaker">PERSONAJE</b><span id="time">0.0 s</span></div>
+    <div id="dialogue" class="dialogue">Pulsa empezar.</div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="gameButtons">
+      <button class="secondary" id="prevBtn">↶</button>
+      <button class="primary" id="startBtn">🎙️ EMPEZAR</button>
+      <button class="secondary" id="nextBtn">↷</button>
+    </div>
+    <div id="heard" class="heard"></div>
+  </div>
+</section>
+
+<section class="view" id="resultsView">
+  <div class="results">
+    <small>ESCENA TERMINADA</small>
+    <h2>¡Buen trabajo!</h2>
+    <div class="finalScore" id="finalScore">0</div>
+    <div class="stars" id="stars">★★★★★</div>
+    <div class="stats">
+      <div><b id="timing">0%</b><span>Ritmo</span></div>
+      <div><b id="words">0%</b><span>Palabras</span></div>
+      <div><b id="energy">0%</b><span>Voz</span></div>
+      <div><b id="combo">0×</b><span>Combo</span></div>
+    </div>
+    <button class="primary" id="againBtn">↻ Jugar otra vez</button>
+    <button class="secondary" data-view="play">Elegir otra</button>
+  </div>
+</section>
+
+<section class="view" id="libraryView">
+  <div class="heading"><div><small>TU CONTENIDO</small><h2>Biblioteca</h2></div><button class="primary" data-view="editor">＋ Importar</button></div>
+  <div id="library"></div>
+</section>
+
+<section class="view" id="editorView">
+  <div class="heading"><div><small>ESTUDIO</small><h2>Crear escena</h2></div><button class="secondary" id="demoBtn">Cargar ejemplo</button></div>
+  <div class="editor">
+    <form class="panel" id="sceneForm">
+      <label>Nombre<input id="name" required placeholder="Mi escena"></label>
+      <label>Categoría<select id="category"><option>Comedia</option><option>Drama</option><option>Terror</option><option>Romance</option><option>Acción</option><option>Caricaturas</option><option>Personalizada</option></select></label>
+      <label>Video / imagen / audio<input id="mediaFile" type="file" accept="video/*,image/*,audio/*" required></label>
+      <div id="preview" class="preview">Aquí aparecerá la vista previa.</div>
+      <label>Portada opcional<input id="coverFile" type="file" accept="image/*"></label>
+      <label>Diálogos <span>PERSONAJE | INICIO | FIN | TEXTO</span>
+        <textarea id="dialogues" required placeholder="ALEX | 0 | 3 | ¿Dónde estabas?
+SAM | 3 | 6 | Buscándote."></textarea>
+      </label>
+      <div><button class="primary" type="submit">💾 Guardar escena</button><button class="secondary" type="button" id="clearBtn">Limpiar</button></div>
+    </form>
+    <aside class="panel help"><small>FORMATO</small><h3>Ejemplo</h3><code>ALEX | 0 | 3 | ¿Dónde estabas?<br>SAM | 3 | 6 | Buscándote.</code><p>Los tiempos son segundos desde el inicio del archivo.</p><p>Para usar el micrófono en línea, publica el proyecto mediante HTTPS.</p></aside>
+  </div>
+</section>
+
+<section class="view" id="settingsView">
+  <div class="heading"><div><small>CONFIGURACIÓN</small><h2>Ajustes</h2></div></div>
+  <div class="cards">
+    <article><h3>🎙️ Voz</h3><label>Idioma<select id="lang"><option value="es-MX">Español México</option><option value="es-ES">Español España</option><option value="en-US">English</option></select></label><label class="check"><input id="voiceScore" type="checkbox" checked> Puntuar palabras</label></article>
+    <article><h3>⏱️ Cuenta regresiva</h3><label>Inicio<select id="count"><option value="0">Sin cuenta</option><option value="3">3 segundos</option><option value="5">5 segundos</option></select></label></article>
+    <article><h3>🗑️ Biblioteca</h3><button class="danger" id="deleteAll">Borrar mis escenas</button></article>
+  </div>
+</section>
+</main>
+<div id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
