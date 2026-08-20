@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#090909">
+  <title>DOBLA-ME — Karaoke de Doblaje</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <button class="brand" data-view="home"><span class="brand-mark">D</span><span>DOBLA<span class="accent">-ME</span></span></button>
+    <nav>
+      <button data-view="play">Jugar</button>
+      <button data-view="library">Biblioteca</button>
+      <button data-view="editor">Crear escena</button>
+      <button data-view="settings">Ajustes</button>
+    </nav>
+    <button id="themeBtn" class="icon-btn" title="Cambiar ambiente">◐</button>
+  </header>
+
+  <main>
+    <section id="homeView" class="view active">
+      <div class="hero">
+        <div class="hero-glow"></div>
+        <div class="hero-content">
+          <p class="eyebrow">KARAOKE DE DOBLAJE</p>
+          <h1>Tu voz.<br><span>La escena.</span><br>El espectáculo.</h1>
+          <p class="lead">Convierte cualquier escena que tengas en una batalla de doblaje con micrófono, subtítulos sincronizados, puntuación y modo fiesta.</p>
+          <div class="hero-actions">
+            <button class="primary xl" data-view="play">▶ EMPEZAR</button>
+            <button class="ghost xl" data-view="editor">＋ CREAR ESCENA</button>
+          </div>
+          <div class="feature-row">
+            <span>🎙️ Micrófono</span><span>🎬 Tus escenas</span><span>⭐ Puntuación</span><span>👥 2 jugadores</span>
+          </div>
+        </div>
+      </div>
+      <div class="section-title"><h2>Cómo se juega</h2><span>3 pasos</span></div>
+      <div class="steps">
+        <article><b>01</b><h3>Elige una escena</h3><p>Usa una escena de ejemplo o importa tu propio video, imagen o audio.</p></article>
+        <article><b>02</b><h3>Dobla el personaje</h3><p>El texto aparece como karaoke. Habla al micrófono y sigue el ritmo.</p></article>
+        <article><b>03</b><h3>¡Gana puntos!</h3><p>El juego compara tus palabras, ritmo y tiempo de entrada.</p></article>
+      </div>
+    </section>
+
+    <section id="playView" class="view">
+      <div class="page-head"><div><p class="eyebrow">SELECCIÓN</p><h2>Elige tu escena</h2></div><button class="ghost" data-view="editor">＋ Nueva escena</button></div>
+      <div id="categoryChips" class="chips"></div>
+      <div id="sceneGrid" class="scene-grid"></div>
+    </section>
+
+    <section id="gameView" class="view">
+      <div class="game-shell">
+        <div class="game-top">
+          <button class="icon-btn" id="quitGame">✕</button>
+          <div><small id="roundLabel">RONDA 1</small><strong id="gameTitle">Escena</strong></div>
+          <div class="score-pill">⭐ <span id="score">0</span></div>
+        </div>
+        <div class="stage">
+          <video id="sceneVideo" playsinline preload="metadata"></video>
+          <img id="sceneImage" alt="">
+          <audio id="sceneAudio"></audio>
+          <div id="stageEmpty" class="stage-empty">Preparando escena…</div>
+          <div class="cinema-vignette"></div>
+          <div id="countdown" class="countdown hidden">3</div>
+          <div class="mic-state"><span id="micDot"></span><span id="micText">Micrófono apagado</span></div>
+        </div>
+        <div class="karaoke-panel">
+          <div class="speaker-line"><span id="speakerBadge">PERSONAJE</span><span id="timerText">0.0 s</span></div>
+          <div id="dialogueText" class="dialogue">Pulsa empezar para comenzar.</div>
+          <div id="translationText" class="translation"></div>
+          <div class="progress"><i id="lineProgress"></i></div>
+          <div class="game-controls">
+            <button class="ghost" id="prevLine">↶</button>
+            <button class="primary" id="startRound">🎙️ EMPEZAR</button>
+            <button class="ghost" id="nextLine">↷</button>
+          </div>
+          <div id="transcript" class="transcript"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="resultsView" class="view">
+      <div class="results">
+        <p class="eyebrow">ESCENA TERMINADA</p>
+        <h2 id="resultTitle">¡Buen trabajo!</h2>
+        <div class="big-score"><span id="finalScore">0</span><small>/ 10,000</small></div>
+        <div class="rating" id="rating">★★★★★</div>
+        <div class="stat-grid">
+          <div><b id="timingStat">0%</b><span>Ritmo</span></div>
+          <div><b id="wordStat">0%</b><span>Palabras</span></div>
+          <div><b id="energyStat">0%</b><span>Micrófono</span></div>
+          <div><b id="comboStat">0×</b><span>Combo</span></div>
+        </div>
+        <div class="result-actions"><button class="primary" id="againBtn">↻ Otra vez</button><button class="ghost" data-view="play">Elegir otra</button></div>
+      </div>
+    </section>
+
+    <section id="libraryView" class="view">
+      <div class="page-head"><div><p class="eyebrow">TU CONTENIDO</p><h2>Biblioteca</h2></div><button class="primary" data-view="editor">＋ Importar</button></div>
+      <div id="libraryList" class="library-list"></div>
+    </section>
+
+    <section id="editorView" class="view">
+      <div class="page-head"><div><p class="eyebrow">ESTUDIO</p><h2>Crear una escena</h2></div><button class="ghost" id="loadDemo">Cargar ejemplo</button></div>
+      <div class="editor-grid">
+        <form id="sceneForm" class="card form-card">
+          <label>Nombre de la escena<input id="sceneName" required placeholder="Ej. La discusión"></label>
+          <div class="two">
+            <label>Categoría<select id="sceneCategory"><option>Comedia</option><option>Drama</option><option>Terror</option><option>Romance</option><option>Caricaturas</option><option>Acción</option><option>Videojuegos</option><option>Personalizada</option></select></label>
+            <label>Modo<select id="sceneMode"><option value="video">Video</option><option value="image">Imagen</option><option value="audio">Audio</option></select></label>
+          </div>
+          <label>Archivo multimedia<input id="mediaFile" type="file" accept="video/*,image/*,audio/*"></label>
+          <div id="mediaPreview" class="upload-preview">Selecciona un archivo para previsualizarlo.</div>
+          <label>Portada (opcional)<input id="coverFile" type="file" accept="image/*"></label>
+          <label>Diálogos <small>Una línea por personaje. Formato: <b>PERSONAJE | inicio | fin | texto</b></small>
+            <textarea id="dialogueInput" rows="12" spellcheck="false" placeholder="ALEX | 0 | 3.5 | ¿Dónde estabas?
+SAM | 3.5 | 7 | Buscándote.
+ALEX | 7 | 11 | Tenemos que hablar."></textarea>
+          </label>
+          <div class="form-actions"><button type="submit" class="primary">💾 Guardar escena</button><button type="button" class="ghost" id="clearForm">Limpiar</button></div>
+        </form>
+        <aside class="card tips">
+          <p class="eyebrow">GUÍA RÁPIDA</p><h3>Hazlo cinematográfico</h3>
+          <ul><li>Usa videos cortos de 15–90 segundos.</li><li>Los tiempos están en segundos desde el inicio.</li><li>El texto debe corresponder a lo que el jugador debe decir.</li><li>Activa el micrófono al comenzar una ronda.</li><li>El reconocimiento de voz funciona mejor en Chrome/Edge.</li></ul>
+          <div class="format"><code>PERSONAJE | INICIO | FIN | DIÁLOGO</code></div>
+          <p class="muted">Los archivos importados se guardan localmente en este navegador mediante IndexedDB.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section id="settingsView" class="view">
+      <div class="page-head"><div><p class="eyebrow">PERSONALIZACIÓN</p><h2>Ajustes</h2></div></div>
+      <div class="settings-grid">
+        <div class="card"><h3>🎙️ Voz</h3><label>Idioma<select id="voiceLang"><option value="es-MX">Español (México)</option><option value="es-ES">Español (España)</option><option value="en-US">English</option></select></label><label class="switch"><input type="checkbox" id="voiceScoring" checked><span></span> Puntuación por palabras</label></div>
+        <div class="card"><h3>🎬 Juego</h3><label>Cuenta regresiva<select id="countdownSetting"><option value="3">3 segundos</option><option value="5">5 segundos</option><option value="0">Sin cuenta regresiva</option></select></label><label class="switch"><input type="checkbox" id="autoAdvance" checked><span></span> Avance automático</label></div>
+        <div class="card"><h3>🗑️ Datos</h3><p class="muted">Borra las escenas creadas en este navegador.</p><button class="danger" id="wipeData">Borrar biblioteca</button></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast"></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
