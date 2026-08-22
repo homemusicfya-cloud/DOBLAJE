@@ -1,16 +1,14 @@
-app.js — DOBLA-ME
-
 (() => {
 "use strict";
 
-/* =========================================================
+/* =========================
    UTILIDADES
-========================================================= */
+========================= */
 
 const $ = id => document.getElementById(id);
 const $$ = selector => Array.from(document.querySelectorAll(selector));
 
-const DB_NAME = "doblame-v3";
+const DB_NAME = "doblame-v2";
 const STORE = "scenes";
 
 let db = null;
@@ -18,7 +16,6 @@ let scenes = [];
 let currentScene = null;
 let currentLine = 0;
 let timer = null;
-
 let recognition = null;
 let micStream = null;
 let audioContext = null;
@@ -41,9 +38,9 @@ const settings = {
 };
 
 
-/* =========================================================
+/* =========================
    MENSAJES
-========================================================= */
+========================= */
 
 function toast(text) {
   const t = $("toast");
@@ -59,9 +56,9 @@ function toast(text) {
 }
 
 
-/* =========================================================
-   SEGURIDAD HTML
-========================================================= */
+/* =========================
+   ESCAPE HTML
+========================= */
 
 function esc(text) {
   return String(text).replace(
@@ -77,9 +74,9 @@ function esc(text) {
 }
 
 
-/* =========================================================
+/* =========================
    ID
-========================================================= */
+========================= */
 
 function newId() {
   return crypto.randomUUID
@@ -88,18 +85,18 @@ function newId() {
 }
 
 
-/* =========================================================
+/* =========================
    BASE DE DATOS
-========================================================= */
+========================= */
 
 function openDB() {
   return new Promise((resolve, reject) => {
 
-    const request = indexedDB.open(DB_NAME, 1);
+    const r = indexedDB.open(DB_NAME, 1);
 
-    request.onupgradeneeded = () => {
+    r.onupgradeneeded = () => {
 
-      const database = request.result;
+      const database = r.result;
 
       if (!database.objectStoreNames.contains(STORE)) {
         database.createObjectStore(STORE, {
@@ -108,13 +105,13 @@ function openDB() {
       }
     };
 
-    request.onsuccess = () => {
-      db = request.result;
+    r.onsuccess = () => {
+      db = r.result;
       resolve();
     };
 
-    request.onerror = () => {
-      reject(request.error);
+    r.onerror = () => {
+      reject(r.error);
     };
   });
 }
@@ -128,52 +125,49 @@ function store(mode = "readonly") {
 
 
 function saveScene(scene) {
-
   return new Promise((resolve, reject) => {
 
-    const request = store("readwrite").put(scene);
+    const r = store("readwrite").put(scene);
 
-    request.onsuccess = () => resolve();
+    r.onsuccess = () => resolve();
 
-    request.onerror = () => reject(request.error);
+    r.onerror = () => reject(r.error);
   });
 }
 
 
 function loadScenes() {
-
   return new Promise((resolve, reject) => {
 
-    const request = store().getAll();
+    const r = store().getAll();
 
-    request.onsuccess = () => resolve(request.result);
+    r.onsuccess = () => resolve(r.result);
 
-    request.onerror = () => reject(request.error);
+    r.onerror = () => reject(r.error);
   });
 }
 
 
 function removeScene(id) {
-
   return new Promise((resolve, reject) => {
 
-    const request = store("readwrite").delete(id);
+    const r = store("readwrite").delete(id);
 
-    request.onsuccess = () => resolve();
+    r.onsuccess = () => resolve();
 
-    request.onerror = () => reject(request.error);
+    r.onerror = () => reject(r.error);
   });
 }
 
 
-/* =========================================================
+/* =========================
    NAVEGACIÓN
-========================================================= */
+========================= */
 
 function view(name) {
 
-  $$(".view").forEach(element => {
-    element.classList.remove("active");
+  $$(".view").forEach(x => {
+    x.classList.remove("active");
   });
 
   const target = $(name + "View");
@@ -212,9 +206,9 @@ if ($("homeBtn")) {
 }
 
 
-/* =========================================================
-   DIÁLOGOS
-========================================================= */
+/* =========================
+   ESCENAS
+========================= */
 
 function parseLines(text) {
 
@@ -225,16 +219,16 @@ function parseLines(text) {
 
     .map((line, i) => {
 
-      const parts = line
+      const p = line
         .split("|")
         .map(x => x.trim());
 
-      if (parts.length < 4) {
+      if (p.length < 4) {
         return null;
       }
 
-      const start = Number(parts[1]);
-      const end = Number(parts[2]);
+      const start = Number(p[1]);
+      const end = Number(p[2]);
 
       if (
         !Number.isFinite(start) ||
@@ -246,12 +240,11 @@ function parseLines(text) {
 
       return {
         id: i,
-        speaker: parts[0],
+        speaker: p[0],
         start,
         end,
-        text: parts.slice(3).join("|")
+        text: p.slice(3).join("|")
       };
-
     })
 
     .filter(Boolean)
@@ -260,16 +253,15 @@ function parseLines(text) {
 }
 
 
-/* =========================================================
-   ESCENAS
-========================================================= */
-
 function renderScenes(category = "Todas") {
 
   const cats = [
     "Todas",
-    ...new Set(scenes.map(x => x.category))
+    ...new Set(
+      scenes.map(x => x.category)
+    )
   ];
+
 
   if ($("filters")) {
 
@@ -281,10 +273,11 @@ function renderScenes(category = "Todas") {
       )
       .join("");
 
-    $$(".filter").forEach(button => {
 
-      button.onclick = () => {
-        renderScenes(button.dataset.cat);
+    $$(".filter").forEach(b => {
+
+      b.onclick = () => {
+        renderScenes(b.dataset.cat);
       };
 
     });
@@ -294,10 +287,14 @@ function renderScenes(category = "Todas") {
   const list =
     category === "Todas"
       ? scenes
-      : scenes.filter(x => x.category === category);
+      : scenes.filter(
+          x => x.category === category
+        );
 
 
-  if (!$("sceneGrid")) return;
+  if (!$("sceneGrid")) {
+    return;
+  }
 
 
   if (!list.length) {
@@ -312,35 +309,31 @@ function renderScenes(category = "Todas") {
 
 
   $("sceneGrid").innerHTML = list
-    .map(scene => {
+    .map(s => `
+      <article class="scene" data-id="${s.id}">
 
-      return `
-        <article class="scene" data-id="${scene.id}">
+        <div class="cover">
+          ${
+            s.cover
+              ? `<img src="${s.cover}" alt="">`
+              : "🎬"
+          }
+        </div>
 
-          <div class="cover">
-            ${
-              scene.cover
-                ? `<img src="${scene.cover}" alt="">`
-                : "🎬"
-            }
-          </div>
+        <div class="meta">
 
-          <div class="meta">
+          <h3>${esc(s.name)}</h3>
 
-            <h3>${esc(scene.name)}</h3>
+          <p>
+            ${esc(s.category)}
+            · ${s.lines.length} diálogos
+            · ${Number(s.duration || 0).toFixed(1)} s
+          </p>
 
-            <p>
-              ${esc(scene.category)}
-              · ${scene.lines.length} diálogos
-              · ${Number(scene.duration || 0).toFixed(1)} s
-            </p>
+        </div>
 
-          </div>
-
-        </article>
-      `;
-
-    })
+      </article>
+    `)
     .join("");
 
 
@@ -348,12 +341,12 @@ function renderScenes(category = "Todas") {
 
     card.onclick = () => {
 
-      const scene = scenes.find(
+      const s = scenes.find(
         x => x.id === card.dataset.id
       );
 
-      if (scene) {
-        startGame(scene);
+      if (s) {
+        startGame(s);
       }
 
     };
@@ -362,13 +355,11 @@ function renderScenes(category = "Todas") {
 }
 
 
-/* =========================================================
-   BIBLIOTECA
-========================================================= */
-
 function renderLibrary() {
 
-  if (!$("library")) return;
+  if (!$("library")) {
+    return;
+  }
 
 
   if (!scenes.length) {
@@ -383,55 +374,51 @@ function renderLibrary() {
 
 
   $("library").innerHTML = scenes
-    .map(scene => {
+    .map(s => `
+      <div class="libraryItem">
 
-      return `
-        <div class="libraryItem">
+        <div class="thumb">
+          ${
+            s.cover
+              ? `<img src="${s.cover}" alt="">`
+              : "🎬"
+          }
+        </div>
 
-          <div class="thumb">
-            ${
-              scene.cover
-                ? `<img src="${scene.cover}" alt="">`
-                : "🎬"
-            }
-          </div>
+        <div class="grow">
 
-          <div class="grow">
+          <h3>${esc(s.name)}</h3>
 
-            <h3>${esc(scene.name)}</h3>
-
-            <p>
-              ${esc(scene.category)}
-              · ${scene.lines.length} diálogos
-            </p>
-
-          </div>
-
-          <button
-            class="primary play"
-            data-id="${scene.id}">
-            Jugar
-          </button>
-
-          <button
-            class="danger del"
-            data-id="${scene.id}">
-            Borrar
-          </button>
+          <p>
+            ${esc(s.category)}
+            · ${s.lines.length} diálogos
+          </p>
 
         </div>
-      `;
 
-    })
+        <button
+          class="primary play"
+          data-id="${s.id}">
+          Jugar
+        </button>
+
+        <button
+          class="danger del"
+          data-id="${s.id}">
+          Borrar
+        </button>
+
+      </div>
+    `)
     .join("");
 
 
-  $$(".play").forEach(button => {
+  $$(".play").forEach(b => {
 
-    button.onclick = () => {
+    b.onclick = () => {
 
       const scene = scenes.find(
-        x => x.id === button.dataset.id
+        s => s.id === b.dataset.id
       );
 
       if (scene) {
@@ -443,17 +430,27 @@ function renderLibrary() {
   });
 
 
-  $$(".del").forEach(button => {
+  $$(".del").forEach(b => {
 
-    button.onclick = async () => {
+    b.onclick = async () => {
 
-      if (!confirm("¿Borrar esta escena?")) {
+      if (
+        !confirm(
+          "¿Borrar esta escena?"
+        )
+      ) {
         return;
       }
 
-      await removeScene(button.dataset.id);
 
-      scenes = await loadScenes();
+      await removeScene(
+        b.dataset.id
+      );
+
+
+      scenes =
+        await loadScenes();
+
 
       renderLibrary();
 
@@ -464,101 +461,125 @@ function renderLibrary() {
 }
 
 
-/* =========================================================
+/* =========================
    ARCHIVOS
-========================================================= */
+========================= */
 
 function fileData(file) {
 
-  return new Promise((resolve, reject) => {
+  return new Promise(
+    (resolve, reject) => {
 
-    if (!file) {
-      resolve(null);
-      return;
+      if (!file) {
+        resolve(null);
+        return;
+      }
+
+
+      const reader =
+        new FileReader();
+
+
+      reader.onload = () => {
+        resolve(reader.result);
+      };
+
+
+      reader.onerror = () => {
+        reject(reader.error);
+      };
+
+
+      reader.readAsDataURL(file);
     }
-
-    const reader = new FileReader();
-
-    reader.onload = () => resolve(reader.result);
-
-    reader.onerror = () => reject(reader.error);
-
-    reader.readAsDataURL(file);
-  });
+  );
 }
 
 
-/* =========================================================
+/* =========================
    PREVISUALIZACIÓN
-========================================================= */
+========================= */
 
 if ($("mediaFile")) {
 
-  $("mediaFile").addEventListener("change", () => {
+  $("mediaFile").addEventListener(
+    "change",
+    () => {
 
-    const file = $("mediaFile").files[0];
+      const f =
+        $("mediaFile").files[0];
 
-    const preview = $("preview");
+      const p =
+        $("preview");
 
-    if (!file) {
 
-      preview.textContent =
-        "Aquí aparecerá la vista previa.";
+      if (!f) {
 
-      return;
+        p.textContent =
+          "Aquí aparecerá la vista previa.";
+
+        return;
+      }
+
+
+      const url =
+        URL.createObjectURL(f);
+
+
+      if (f.type.startsWith("video/")) {
+
+        p.innerHTML = `
+          <video
+            src="${url}"
+            controls
+            playsinline
+            preload="metadata">
+          </video>
+        `;
+
+      }
+
+      else if (
+        f.type.startsWith("image/")
+      ) {
+
+        p.innerHTML = `
+          <img
+            src="${url}"
+            alt="">
+        `;
+
+      }
+
+      else if (
+        f.type.startsWith("audio/")
+      ) {
+
+        p.innerHTML = `
+          <audio
+            src="${url}"
+            controls>
+          </audio>
+        `;
+      }
+
     }
-
-
-    const url = URL.createObjectURL(file);
-
-
-    if (file.type.startsWith("video/")) {
-
-      preview.innerHTML = `
-        <video
-          src="${url}"
-          controls
-          playsinline
-          preload="metadata">
-        </video>
-      `;
-
-    }
-
-    else if (file.type.startsWith("image/")) {
-
-      preview.innerHTML = `
-        <img src="${url}" alt="">
-      `;
-
-    }
-
-    else if (file.type.startsWith("audio/")) {
-
-      preview.innerHTML = `
-        <audio
-          src="${url}"
-          controls>
-        </audio>
-      `;
-    }
-
-  });
+  );
 
 }
 
 
-/* =========================================================
+/* =========================
    CREAR ESCENA
-========================================================= */
+========================= */
 
 if ($("sceneForm")) {
 
   $("sceneForm").addEventListener(
     "submit",
-    async event => {
+    async e => {
 
-      event.preventDefault();
+      e.preventDefault();
 
 
       const file =
@@ -568,7 +589,9 @@ if ($("sceneForm")) {
         $("coverFile").files[0];
 
       const lines =
-        parseLines($("dialogues").value);
+        parseLines(
+          $("dialogues").value
+        );
 
 
       if (!file) {
@@ -594,25 +617,30 @@ if ($("sceneForm")) {
       let mode = "image";
 
 
-      if (file.type.startsWith("video/")) {
+      if (
+        file.type.startsWith("video/")
+      ) {
 
         mode = "video";
 
       }
 
-      else if (file.type.startsWith("audio/")) {
+      else if (
+        file.type.startsWith("audio/")
+      ) {
 
         mode = "audio";
-
       }
 
 
-      toast("Guardando escena...");
+      toast(
+        "Guardando escena..."
+      );
 
 
       try {
 
-        const mediaData =
+        const media =
           await fileData(file);
 
         const coverData =
@@ -631,7 +659,7 @@ if ($("sceneForm")) {
 
           mode,
 
-          media: mediaData,
+          media,
 
           cover: coverData,
 
@@ -645,7 +673,9 @@ if ($("sceneForm")) {
 
           duration:
             Math.max(
-              ...lines.map(x => x.end)
+              ...lines.map(
+                x => x.end
+              )
             ),
 
           created:
@@ -660,7 +690,7 @@ if ($("sceneForm")) {
           await loadScenes();
 
 
-        event.target.reset();
+        e.target.reset();
 
 
         $("preview").textContent =
@@ -674,14 +704,13 @@ if ($("sceneForm")) {
 
         view("play");
 
-
       }
 
-      catch (error) {
+      catch (err) {
 
         console.error(
-          "Error guardando escena:",
-          error
+          "Error guardando:",
+          err
         );
 
         toast(
@@ -695,9 +724,9 @@ if ($("sceneForm")) {
 }
 
 
-/* =========================================================
-   LIMPIAR FORMULARIO
-========================================================= */
+/* =========================
+   LIMPIAR
+========================= */
 
 if ($("clearBtn")) {
 
@@ -716,9 +745,9 @@ if ($("clearBtn")) {
 }
 
 
-/* =========================================================
-   ESCENA DEMO
-========================================================= */
+/* =========================
+   DEMO
+========================= */
 
 if ($("demoBtn")) {
 
@@ -748,9 +777,9 @@ SAM | 9 | 12 | ¡Cámara, micrófono y acción!`;
 }
 
 
-/* =========================================================
+/* =========================
    MULTIMEDIA
-========================================================= */
+========================= */
 
 function mediaElement() {
 
@@ -759,12 +788,18 @@ function mediaElement() {
   }
 
 
-  if (currentScene.mode === "video") {
+  if (
+    currentScene.mode === "video"
+  ) {
+
     return $("video");
   }
 
 
-  if (currentScene.mode === "audio") {
+  if (
+    currentScene.mode === "audio"
+  ) {
+
     return $("audio");
   }
 
@@ -773,15 +808,16 @@ function mediaElement() {
 }
 
 
-/* =========================================================
-   PREPARAR VIDEO / AUDIO / IMAGEN
-========================================================= */
-
 function setupMedia(scene) {
 
-  const video = $("video");
-  const image = $("image");
-  const audio = $("audio");
+  const video =
+    $("video");
+
+  const image =
+    $("image");
+
+  const audio =
+    $("audio");
 
 
   if (!video || !image || !audio) {
@@ -813,152 +849,189 @@ function setupMedia(scene) {
   audio.classList.add("hidden");
 
 
-  $("stageMessage").classList.remove("hidden");
+  $("stageMessage")
+    .classList
+    .remove("hidden");
 
 
   if (!scene.media) {
 
-    $("stageMessage").textContent =
+    $("stageMessage")
+      .textContent =
       "No hay archivo multimedia.";
 
     return;
   }
 
 
-  if (scene.mode === "video") {
+  if (
+    scene.mode === "video"
+  ) {
 
-    video.src = scene.media;
+    video.src =
+      scene.media;
 
-    video.controls = true;
-    video.playsInline = true;
+    video.controls =
+      true;
+
+    video.playsInline =
+      true;
+
+    video.preload =
+      "metadata";
 
     video.load();
 
-    video.classList.remove("hidden");
 
-    $("stageMessage").classList.add(
+    video.classList.remove(
       "hidden"
     );
+
+
+    $("stageMessage")
+      .classList
+      .add("hidden");
+
 
     video.onerror = () => {
 
       console.error(
-        "Error del video:",
+        "Error de video:",
         video.error
       );
 
-      $("stageMessage").textContent =
+      $("stageMessage")
+        .textContent =
         "No se pudo reproducir este video.";
 
-      $("stageMessage").classList.remove(
-        "hidden"
-      );
+      $("stageMessage")
+        .classList
+        .remove("hidden");
 
       toast(
         "El navegador no puede reproducir este video."
       );
     };
 
-
   }
 
-  else if (scene.mode === "image") {
+  else if (
+    scene.mode === "image"
+  ) {
 
-    image.src = scene.media;
+    image.src =
+      scene.media;
 
-    image.classList.remove("hidden");
-
-    $("stageMessage").classList.add(
+    image.classList.remove(
       "hidden"
     );
 
+    $("stageMessage")
+      .classList
+      .add("hidden");
 
   }
 
   else {
 
-    audio.src = scene.media;
+    audio.src =
+      scene.media;
 
-    audio.controls = true;
+    audio.controls =
+      true;
 
     audio.load();
 
-    audio.classList.remove("hidden");
-
-    $("stageMessage").textContent =
-      "Audio listo";
-
-    $("stageMessage").classList.remove(
+    audio.classList.remove(
       "hidden"
     );
+
+    $("stageMessage")
+      .textContent =
+      "Audio listo";
+
   }
 }
 
 
-/* =========================================================
-   ESPERAR METADATA DEL VIDEO
-========================================================= */
+/* =========================
+   ESPERAR VIDEO
+========================= */
 
 function waitVideo(video) {
 
-  return new Promise(resolve => {
+  return new Promise(
+    resolve => {
 
-    if (
-      video.readyState >= 2 &&
-      Number.isFinite(video.duration)
-    ) {
+      if (
+        video.readyState >= 2 &&
+        Number.isFinite(
+          video.duration
+        )
+      ) {
 
-      resolve();
+        resolve();
 
-      return;
-    }
-
-
-    let finished = false;
+        return;
+      }
 
 
-    const done = () => {
+      let doneCalled =
+        false;
 
-      if (finished) return;
 
-      finished = true;
+      const done = () => {
 
-      video.removeEventListener(
+        if (doneCalled) {
+          return;
+        }
+
+        doneCalled =
+          true;
+
+
+        video.removeEventListener(
+          "loadedmetadata",
+          done
+        );
+
+        video.removeEventListener(
+          "canplay",
+          done
+        );
+
+
+        resolve();
+      };
+
+
+      video.addEventListener(
         "loadedmetadata",
-        done
+        done,
+        { once: true }
       );
 
-      video.removeEventListener(
+
+      video.addEventListener(
         "canplay",
-        done
+        done,
+        { once: true }
       );
 
-      resolve();
-    };
 
+      setTimeout(
+        done,
+        5000
+      );
 
-    video.addEventListener(
-      "loadedmetadata",
-      done,
-      { once: true }
-    );
-
-
-    video.addEventListener(
-      "canplay",
-      done,
-      { once: true }
-    );
-
-
-    setTimeout(done, 5000);
-  });
+    }
+  );
 }
 
 
-/* =========================================================
-   INICIAR JUEGO
-========================================================= */
+/* =========================
+   JUEGO
+========================= */
 
 async function startGame(scene) {
 
@@ -970,13 +1043,17 @@ async function startGame(scene) {
   stopGame();
 
 
-  currentScene = scene;
+  currentScene =
+    scene;
 
-  currentLine = 0;
+  currentLine =
+    0;
 
-  spokenText = "";
+  spokenText =
+    "";
 
-  gameStarted = false;
+  gameStarted =
+    false;
 
 
   scoreData = {
@@ -987,10 +1064,13 @@ async function startGame(scene) {
   };
 
 
-  $("gameTitle").textContent =
+  $("gameTitle")
+    .textContent =
     scene.name;
 
-  $("score").textContent =
+
+  $("score")
+    .textContent =
     "0";
 
 
@@ -1014,18 +1094,18 @@ async function startGame(scene) {
 
     try {
 
-      await waitVideo(media);
+      await waitVideo(
+        media
+      );
 
-      media.currentTime = 0;
+      media.currentTime =
+        0;
 
     }
 
-    catch (error) {
+    catch (err) {
 
-      console.error(
-        "Error preparando video:",
-        error
-      );
+      console.error(err);
     }
   }
 
@@ -1033,86 +1113,88 @@ async function startGame(scene) {
   /*
     IMPORTANTE:
 
-    AQUÍ YA NO REPRODUCIMOS EL VIDEO.
+    NO iniciamos aquí el video.
 
-    Antes se llamaba playScene()
-    automáticamente y Android podía
-    bloquear la reproducción.
-
-    Ahora esperamos al botón
-    🎙️ EMPEZAR.
+    Esperamos a que el usuario
+    pulse el botón EMPEZAR.
   */
 
-
-  $("startBtn").textContent =
+  $("startBtn")
+    .textContent =
     "🎙️ EMPEZAR";
 
 
-  $("micText").textContent =
+  $("micText")
+    .textContent =
     "Micrófono apagado";
 
-
-  $("heard").textContent = "";
-
 }
 
 
-/* =========================================================
+/* =========================
    CUENTA REGRESIVA
-========================================================= */
+========================= */
 
-function doCountdown(seconds) {
+function doCountdown(n) {
 
-  return new Promise(resolve => {
+  return new Promise(
+    resolve => {
 
-    const element =
-      $("countdown");
-
-
-    element.classList.remove(
-      "hidden"
-    );
+      const el =
+        $("countdown");
 
 
-    let number = seconds;
-
-    element.textContent =
-      number;
-
-
-    const interval =
-      setInterval(() => {
-
-        number--;
+      el.classList.remove(
+        "hidden"
+      );
 
 
-        if (number <= 0) {
+      let x =
+        n;
 
-          clearInterval(interval);
 
-          element.classList.add(
-            "hidden"
-          );
+      el.textContent =
+        x;
 
-          resolve();
 
-        }
+      const t =
+        setInterval(
+          () => {
 
-        else {
+            x--;
 
-          element.textContent =
-            number;
 
-        }
+            if (x <= 0) {
 
-      }, 1000);
-  });
+              clearInterval(t);
+
+              el.classList.add(
+                "hidden"
+              );
+
+              resolve();
+
+            }
+
+            else {
+
+              el.textContent =
+                x;
+
+            }
+
+          },
+          1000
+        );
+
+    }
+  );
 }
 
 
-/* =========================================================
-   INICIAR REPRODUCCIÓN
-========================================================= */
+/* =========================
+   REPRODUCIR ESCENA
+========================= */
 
 async function playScene() {
 
@@ -1121,45 +1203,57 @@ async function playScene() {
 
 
   if (!media) {
+
+    toast(
+      "No hay video o audio para reproducir."
+    );
+
     return false;
   }
 
 
   try {
 
-    media.currentTime = 0;
+    media.currentTime =
+      0;
+
 
     /*
-      El play() se ejecuta directamente
-      desde la acción del usuario.
+      Este play() ocurre como
+      consecuencia del clic del usuario.
     */
 
     await media.play();
 
 
-    gameStarted = true;
+    gameStarted =
+      true;
 
 
-    $("startBtn").textContent =
-      "⏸️ PAUSAR";
+    currentLine =
+      0;
 
-
-    currentLine = 0;
 
     renderLine();
 
+
     startTimer();
+
+
+    $("startBtn")
+      .textContent =
+      "⏸️ PAUSAR";
 
 
     return true;
 
   }
 
-  catch (error) {
+  catch (err) {
 
     console.error(
-      "Error reproduciendo:",
-      error
+      "Error play():",
+      err
     );
 
 
@@ -1173,99 +1267,112 @@ async function playScene() {
 }
 
 
-/* =========================================================
+/* =========================
    TEMPORIZADOR
-========================================================= */
+========================= */
 
 function startTimer() {
 
   clearInterval(timer);
 
 
-  timer = setInterval(() => {
+  timer =
+    setInterval(
+      () => {
 
-    if (!currentScene) {
-      return;
-    }
-
-
-    const line =
-      currentScene.lines[currentLine];
+        if (!currentScene) {
+          return;
+        }
 
 
-    if (!line) {
-      return;
-    }
+        const line =
+          currentScene.lines[
+            currentLine
+          ];
 
 
-    const media =
-      mediaElement();
+        if (!line) {
+          return;
+        }
 
 
-    const time =
-      media
-        ? media.currentTime
-        : line.start;
+        const media =
+          mediaElement();
 
 
-    const progress =
-      Math.max(
-        0,
-        Math.min(
-          100,
-          (
-            (time - line.start) /
-            (line.end - line.start)
-          ) * 100
-        )
-      );
+        const time =
+          media
+            ? media.currentTime
+            : line.start;
 
 
-    $("bar").style.width =
-      progress + "%";
+        const progress =
+          Math.max(
+            0,
+            Math.min(
+              100,
+              (
+                (time - line.start) /
+                (line.end - line.start)
+              ) * 100
+            )
+          );
 
 
-    $("time").textContent =
-      Math.max(
-        0,
-        time - line.start
-      ).toFixed(1) + " s";
+        $("bar")
+          .style
+          .width =
+          progress + "%";
 
 
-    if (time >= line.end) {
+        $("time")
+          .textContent =
+          Math.max(
+            0,
+            time - line.start
+          ).toFixed(1) + " s";
 
-      scoreCurrentLine();
+
+        if (
+          time >= line.end
+        ) {
+
+          scoreCurrentLine();
 
 
-      if (
-        currentLine <
-        currentScene.lines.length - 1
-      ) {
+          if (
+            currentLine <
+            currentScene.lines.length - 1
+          ) {
 
-        currentLine++;
+            currentLine++;
 
-        renderLine();
+            renderLine();
 
-      }
+          }
 
-      else {
+          else {
 
-        finishGame();
-      }
-    }
+            finishGame();
+          }
+        }
 
-  }, 50);
+      },
+      50
+    );
 }
 
 
-/* =========================================================
-   MOSTRAR DIÁLOGO
-========================================================= */
+/* =========================
+   LÍNEA ACTUAL
+========================= */
 
 function renderLine() {
 
   const line =
-    currentScene?.lines[currentLine];
+    currentScene?.lines[
+      currentLine
+    ];
 
 
   if (!line) {
@@ -1273,7 +1380,8 @@ function renderLine() {
   }
 
 
-  $("roundLabel").textContent =
+  $("roundLabel")
+    .textContent =
     `DIÁLOGO ${
       currentLine + 1
     } / ${
@@ -1281,50 +1389,53 @@ function renderLine() {
     }`;
 
 
-  $("speaker").textContent =
+  $("speaker")
+    .textContent =
     line.speaker.toUpperCase();
 
 
-  $("dialogue").textContent =
+  $("dialogue")
+    .textContent =
     line.text;
 
 
-  $("bar").style.width =
+  $("bar")
+    .style
+    .width =
     "0%";
 
 
-  $("time").textContent =
+  $("time")
+    .textContent =
     "0.0 s";
 }
 
 
-/* =========================================================
+/* =========================
    PUNTUACIÓN
-========================================================= */
+========================= */
 
 function clean(text) {
 
   return String(text)
-
     .toLowerCase()
-
     .normalize("NFD")
-
     .replace(
       /[\u0300-\u036f]/g,
       ""
     )
-
     .replace(
       /[^\p{L}\p{N}\s]/gu,
       ""
     )
-
     .trim();
 }
 
 
-function accuracy(target, spoken) {
+function accuracy(
+  target,
+  spoken
+) {
 
   const a =
     clean(target)
@@ -1343,7 +1454,9 @@ function accuracy(target, spoken) {
   }
 
 
-  let hits = 0;
+  let hits =
+    0;
+
 
   const used =
     new Set();
@@ -1351,12 +1464,10 @@ function accuracy(target, spoken) {
 
   a.forEach(word => {
 
-    const index =
+    const i =
       b.findIndex(
         (x, n) =>
-
           !used.has(n) &&
-
           (
             x === word ||
             x.includes(word) ||
@@ -1365,9 +1476,9 @@ function accuracy(target, spoken) {
       );
 
 
-    if (index >= 0) {
+    if (i >= 0) {
 
-      used.add(index);
+      used.add(i);
 
       hits++;
     }
@@ -1387,7 +1498,9 @@ function scoreCurrentLine() {
 
 
   const line =
-    currentScene.lines[currentLine];
+    currentScene.lines[
+      currentLine
+    ];
 
 
   if (!line) {
@@ -1411,7 +1524,7 @@ function scoreCurrentLine() {
       1 -
       Math.abs(
         now - line.end
-      ) / 1
+      )
     );
 
 
@@ -1452,10 +1565,8 @@ function scoreCurrentLine() {
 
   const points =
     Math.round(
-
       (10000 /
         currentScene.lines.length) *
-
       (
         timing * 0.4 +
         words * 0.45 +
@@ -1464,27 +1575,28 @@ function scoreCurrentLine() {
     );
 
 
-  $("score").textContent =
+  $("score")
+    .textContent =
     Number(
       $("score").textContent
     ) + points;
 
 
-  $("heard").textContent =
+  $("heard")
+    .textContent =
     spokenText
-
       ? `Escuché: "${spokenText}"`
-
       : "No se detectó voz.";
 
 
-  spokenText = "";
+  spokenText =
+    "";
 }
 
 
-/* =========================================================
-   FINALIZAR
-========================================================= */
+/* =========================
+   FINAL
+========================= */
 
 function finishGame() {
 
@@ -1496,7 +1608,8 @@ function finishGame() {
   stopMicrophone();
 
 
-  gameStarted = false;
+  gameStarted =
+    false;
 
 
   const n =
@@ -1506,21 +1619,24 @@ function finishGame() {
   const timing =
     Math.round(
       scoreData.timing /
-      n * 100
+      n *
+      100
     );
 
 
   const words =
     Math.round(
       scoreData.words /
-      n * 100
+      n *
+      100
     );
 
 
   const energy =
     Math.round(
       scoreData.energy /
-      n * 100
+      n *
+      100
     );
 
 
@@ -1530,23 +1646,30 @@ function finishGame() {
     );
 
 
-  $("finalScore").textContent =
-    score.toLocaleString("es-MX");
+  $("finalScore")
+    .textContent =
+    score.toLocaleString(
+      "es-MX"
+    );
 
 
-  $("timing").textContent =
+  $("timing")
+    .textContent =
     timing + "%";
 
 
-  $("words").textContent =
+  $("words")
+    .textContent =
     words + "%";
 
 
-  $("energy").textContent =
+  $("energy")
+    .textContent =
     energy + "%";
 
 
-  $("combo").textContent =
+  $("combo")
+    .textContent =
     scoreData.combo + "×";
 
 
@@ -1555,254 +1678,265 @@ function finishGame() {
       1,
       Math.min(
         5,
-        Math.ceil(score / 2000)
+        Math.ceil(
+          score / 2000
+        )
       )
     );
 
 
-  $("stars").textContent =
+  $("stars")
+    .textContent =
     "★".repeat(stars) +
-    "☆".repeat(5 - stars);
+    "☆".repeat(
+      5 - stars
+    );
 
 
   view("results");
 }
 
 
-/* =========================================================
+/* =========================
    BOTÓN SALIR
-========================================================= */
+========================= */
 
 if ($("quitBtn")) {
 
-  $("quitBtn").addEventListener(
-    "click",
-    () => {
+  $("quitBtn")
+    .addEventListener(
+      "click",
+      () => {
 
-      stopGame();
+        stopGame();
 
-      view("play");
-    }
-  );
+        view("play");
 
+      }
+    );
 }
 
 
-/* =========================================================
+/* =========================
    JUGAR OTRA VEZ
-========================================================= */
+========================= */
 
 if ($("againBtn")) {
 
-  $("againBtn").addEventListener(
-    "click",
-    () => {
+  $("againBtn")
+    .addEventListener(
+      "click",
+      () => {
 
-      if (currentScene) {
-        startGame(currentScene);
+        if (currentScene) {
+          startGame(
+            currentScene
+          );
+        }
+
       }
-
-    }
-  );
-
+    );
 }
 
 
-/* =========================================================
+/* =========================
    ANTERIOR
-========================================================= */
+========================= */
 
 if ($("prevBtn")) {
 
-  $("prevBtn").addEventListener(
-    "click",
-    () => {
+  $("prevBtn")
+    .addEventListener(
+      "click",
+      () => {
 
-      if (
-        !currentScene ||
-        currentLine <= 0
-      ) {
-        return;
+        if (
+          !currentScene ||
+          currentLine <= 0
+        ) {
+          return;
+        }
+
+
+        currentLine--;
+
+        seekLine();
+
       }
-
-
-      currentLine--;
-
-      seekLine();
-
-    }
-  );
-
+    );
 }
 
 
-/* =========================================================
+/* =========================
    SIGUIENTE
-========================================================= */
+========================= */
 
 if ($("nextBtn")) {
 
-  $("nextBtn").addEventListener(
-    "click",
-    () => {
+  $("nextBtn")
+    .addEventListener(
+      "click",
+      () => {
 
-      if (
-        !currentScene ||
-        currentLine >=
+        if (
+          !currentScene ||
+          currentLine >=
           currentScene.lines.length - 1
-      ) {
-        return;
+        ) {
+          return;
+        }
+
+
+        currentLine++;
+
+        seekLine();
+
       }
-
-
-      currentLine++;
-
-      seekLine();
-
-    }
-  );
-
+    );
 }
 
 
-/* =========================================================
-   BOTÓN EMPEZAR / PAUSAR
-========================================================= */
+/* =========================
+   BOTÓN EMPEZAR
+========================= */
 
 if ($("startBtn")) {
 
-  $("startBtn").addEventListener(
-    "click",
-    async () => {
+  $("startBtn")
+    .addEventListener(
+      "click",
+      async () => {
 
-      const media =
-        mediaElement();
-
-
-      if (!media) {
-
-        toast(
-          "Esta escena no tiene reproducción temporal."
-        );
-
-        return;
-      }
+        const media =
+          mediaElement();
 
 
-      /*
-        PRIMER CLIC:
-
-        Inicia todo.
-      */
-
-      if (!gameStarted) {
-
-        /*
-          Si hay cuenta regresiva,
-          la hacemos antes del video.
-        */
-
-        if (settings.count > 0) {
-
-          await doCountdown(
-            settings.count
-          );
-
-        }
-
-
-        /*
-          Activamos micrófono.
-
-          No esperamos a que termine
-          para reproducir el video,
-          porque getUserMedia puede
-          tardar en Android.
-        */
-
-        startMicrophone();
-
-
-        /*
-          IMPORTANTE:
-
-          playScene() se llama como
-          consecuencia directa del
-          botón del usuario.
-        */
-
-        const started =
-          await playScene();
-
-
-        if (!started) {
-
-          gameStarted = false;
-
-          $("startBtn").textContent =
-            "🎙️ EMPEZAR";
-        }
-
-
-        return;
-      }
-
-
-      /*
-        SI YA ESTÁ JUGANDO:
-
-        Pausar.
-      */
-
-      if (!media.paused) {
-
-        media.pause();
-
-        clearInterval(timer);
-
-
-        $("startBtn").textContent =
-          "▶️ CONTINUAR";
-
-      }
-
-      else {
-
-        try {
-
-          await media.play();
-
-          $("startBtn").textContent =
-            "⏸️ PAUSAR";
-
-          startTimer();
-
-        }
-
-        catch (error) {
-
-          console.error(error);
+        if (!media) {
 
           toast(
-            "No se pudo continuar el video."
+            "Esta escena no tiene reproducción temporal."
           );
+
+          return;
         }
+
+
+        /*
+          PRIMER CLIC:
+          iniciar escena.
+        */
+
+        if (!gameStarted) {
+
+          if (
+            settings.count > 0
+          ) {
+
+            await doCountdown(
+              settings.count
+            );
+
+          }
+
+
+          /*
+            Pedimos micrófono,
+            pero NO dejamos que
+            bloquee la reproducción.
+          */
+
+          startMicrophone();
+
+
+          const started =
+            await playScene();
+
+
+          if (!started) {
+
+            gameStarted =
+              false;
+
+
+            $("startBtn")
+              .textContent =
+              "🎙️ EMPEZAR";
+          }
+
+
+          return;
+        }
+
+
+        /*
+          YA ESTÁ JUGANDO:
+          pausar o continuar.
+        */
+
+        if (!media.paused) {
+
+          media.pause();
+
+          clearInterval(timer);
+
+
+          $("startBtn")
+            .textContent =
+            "▶️ CONTINUAR";
+
+        }
+
+        else {
+
+          try {
+
+            await media.play();
+
+            $("startBtn")
+              .textContent =
+              "⏸️ PAUSAR";
+
+            startTimer();
+
+          }
+
+          catch (err) {
+
+            console.error(
+              err
+            );
+
+            toast(
+              "No se pudo continuar el video."
+            );
+          }
+        }
+
       }
-
-    }
-  );
-
+    );
 }
 
 
-/* =========================================================
-   IR A UNA LÍNEA
-========================================================= */
+/* =========================
+   BUSCAR LÍNEA
+========================= */
 
 function seekLine() {
 
+  if (!currentScene) {
+    return;
+  }
+
+
   const line =
-    currentScene.lines[currentLine];
+    currentScene.lines[
+      currentLine
+    ];
+
+
+  if (!line) {
+    return;
+  }
 
 
   const media =
@@ -1822,15 +1956,17 @@ function seekLine() {
   }
 
 
-  spokenText = "";
+  spokenText =
+    "";
+
 
   renderLine();
 }
 
 
-/* =========================================================
+/* =========================
    MICRÓFONO
-========================================================= */
+========================= */
 
 async function startMicrophone() {
 
@@ -1839,17 +1975,13 @@ async function startMicrophone() {
     !navigator.mediaDevices.getUserMedia
   ) {
 
-    $("micText").textContent =
+    $("micText")
+      .textContent =
       "Micrófono no disponible";
 
     return;
   }
 
-
-  /*
-    Si ya está activo,
-    no volvemos a pedir permiso.
-  */
 
   if (micStream) {
     return;
@@ -1859,18 +1991,35 @@ async function startMicrophone() {
   try {
 
     micStream =
-      await navigator.mediaDevices.getUserMedia({
-        audio: true
-      });
+      await navigator.mediaDevices
+        .getUserMedia({
+          audio: true
+        });
 
 
-    $("micText").textContent =
+    $("micText")
+      .textContent =
       "Micrófono activo";
 
 
-    $(".mic").classList.add(
-      "on"
-    );
+    /*
+      CORREGIDO:
+
+      Antes:
+      $(".mic")
+
+      Pero $ solo acepta IDs.
+
+      Ahora usamos querySelector.
+    */
+
+    const mic =
+      document.querySelector(".mic");
+
+
+    if (mic) {
+      mic.classList.add("on");
+    }
 
 
     const AC =
@@ -1896,7 +2045,8 @@ async function startMicrophone() {
           .createAnalyser();
 
 
-      analyser.fftSize = 256;
+      analyser.fftSize =
+        256;
 
 
       source.connect(
@@ -1910,43 +2060,52 @@ async function startMicrophone() {
         );
 
 
-      const measure = () => {
+      const measure =
+        () => {
 
-        if (!micStream) {
-          return;
-        }
-
-
-        analyser.getByteTimeDomainData(
-          data
-        );
+          if (!micStream) {
+            return;
+          }
 
 
-        let sum = 0;
+          analyser
+            .getByteTimeDomainData(
+              data
+            );
 
 
-        for (const value of data) {
-
-          const x =
-            (value - 128) / 128;
-
-          sum += x * x;
-        }
+          let sum =
+            0;
 
 
-        micEnergy =
-          Math.min(
-            1,
-            Math.sqrt(
-              sum / data.length
-            ) * 5
+          for (
+            const value of data
+          ) {
+
+            const x =
+              (value - 128) /
+              128;
+
+
+            sum +=
+              x * x;
+          }
+
+
+          micEnergy =
+            Math.min(
+              1,
+              Math.sqrt(
+                sum / data.length
+              ) * 5
+            );
+
+
+          requestAnimationFrame(
+            measure
           );
 
-
-        requestAnimationFrame(
-          measure
-        );
-      };
+        };
 
 
       measure();
@@ -1957,15 +2116,16 @@ async function startMicrophone() {
 
   }
 
-  catch (error) {
+  catch (err) {
 
     console.error(
       "Micrófono:",
-      error
+      err
     );
 
 
-    $("micText").textContent =
+    $("micText")
+      .textContent =
       "Micrófono bloqueado";
 
 
@@ -1976,9 +2136,9 @@ async function startMicrophone() {
 }
 
 
-/* =========================================================
+/* =========================
    RECONOCIMIENTO DE VOZ
-========================================================= */
+========================= */
 
 function setupSpeechRecognition() {
 
@@ -1989,7 +2149,8 @@ function setupSpeechRecognition() {
 
   if (!SR) {
 
-    $("micText").textContent =
+    $("micText")
+      .textContent =
       "Micrófono activo";
 
     return;
@@ -2014,69 +2175,79 @@ function setupSpeechRecognition() {
       true;
 
 
-    recognition.onresult = event => {
+    recognition.onresult =
+      e => {
 
-      let text = "";
-
-
-      for (
-        let i = event.resultIndex;
-        i < event.results.length;
-        i++
-      ) {
-
-        text +=
-          event.results[i][0].transcript +
-          " ";
-      }
+        let text =
+          "";
 
 
-      spokenText =
-        text.trim();
-    };
+        for (
+          let i =
+            e.resultIndex;
+          i <
+            e.results.length;
+          i++
+        ) {
+
+          text +=
+            e.results[i][0]
+              .transcript +
+            " ";
+        }
 
 
-    recognition.onerror =
-      event => {
-
-        console.log(
-          "Reconocimiento:",
-          event.error
-        );
+        spokenText =
+          text.trim();
       };
 
 
-    recognition.onend = () => {
+    recognition.onerror =
+      e => {
 
-      if (micStream && recognition) {
+        console.log(
+          "Reconocimiento:",
+          e.error
+        );
 
-        try {
-          recognition.start();
+      };
+
+
+    recognition.onend =
+      () => {
+
+        if (
+          micStream &&
+          recognition
+        ) {
+
+          try {
+            recognition.start();
+          }
+
+          catch {}
         }
 
-        catch {}
-      }
-
-    };
+      };
 
 
     recognition.start();
 
   }
 
-  catch (error) {
+  catch (err) {
 
     console.log(
       "Error reconocimiento:",
-      error
+      err
     );
   }
 }
 
 
-/* =========================================================
+/* =========================
    DETENER MICRÓFONO
-========================================================= */
+========================= */
 
 function stopMicrophone() {
 
@@ -2088,7 +2259,9 @@ function stopMicrophone() {
 
     catch {}
 
-    recognition = null;
+
+    recognition =
+      null;
   }
 
 
@@ -2096,12 +2269,13 @@ function stopMicrophone() {
 
     micStream
       .getTracks()
-      .forEach(track => {
-        track.stop();
-      });
+      .forEach(
+        t => t.stop()
+      );
 
 
-    micStream = null;
+    micStream =
+      null;
   }
 
 
@@ -2109,32 +2283,51 @@ function stopMicrophone() {
 
     audioContext
       .close()
-      .catch(() => {});
+      .catch(
+        () => {}
+      );
 
 
-    audioContext = null;
+    audioContext =
+      null;
   }
 
 
-  $(".mic")?.classList.remove(
-    "on"
-  );
+  /*
+    CORREGIDO:
+
+    Antes:
+    $(".mic")
+
+    Ahora:
+    document.querySelector(".mic")
+  */
+
+  const mic =
+    document.querySelector(".mic");
+
+
+  if (mic) {
+    mic.classList.remove("on");
+  }
 
 
   if ($("micText")) {
 
-    $("micText").textContent =
+    $("micText")
+      .textContent =
       "Micrófono apagado";
   }
 
 
-  micEnergy = 0;
+  micEnergy =
+    0;
 }
 
 
-/* =========================================================
-   DETENER VIDEO
-========================================================= */
+/* =========================
+   DETENER MULTIMEDIA
+========================= */
 
 function stopMedia() {
 
@@ -2152,7 +2345,8 @@ function stopMedia() {
 
 
     try {
-      media.currentTime = 0;
+      media.currentTime =
+        0;
     }
 
     catch {}
@@ -2160,15 +2354,16 @@ function stopMedia() {
 }
 
 
-/* =========================================================
+/* =========================
    DETENER JUEGO
-========================================================= */
+========================= */
 
 function stopGame() {
 
   clearInterval(timer);
 
-  timer = null;
+  timer =
+    null;
 
 
   stopMedia();
@@ -2176,13 +2371,14 @@ function stopGame() {
   stopMicrophone();
 
 
-  gameStarted = false;
+  gameStarted =
+    false;
 }
 
 
-/* =========================================================
+/* =========================
    AJUSTES
-========================================================= */
+========================= */
 
 if ($("lang")) {
 
@@ -2190,20 +2386,22 @@ if ($("lang")) {
     settings.lang;
 
 
-  $("lang").addEventListener(
-    "change",
-    event => {
+  $("lang")
+    .addEventListener(
+      "change",
+      e => {
 
-      settings.lang =
-        event.target.value;
+        settings.lang =
+          e.target.value;
 
-      localStorage.setItem(
-        "dm-lang",
-        settings.lang
-      );
 
-    }
-  );
+        localStorage.setItem(
+          "dm-lang",
+          settings.lang
+        );
+
+      }
+    );
 }
 
 
@@ -2213,23 +2411,24 @@ if ($("voiceScore")) {
     settings.voice;
 
 
-  $("voiceScore").addEventListener(
-    "change",
-    event => {
+  $("voiceScore")
+    .addEventListener(
+      "change",
+      e => {
 
-      settings.voice =
-        event.target.checked;
+        settings.voice =
+          e.target.checked;
 
 
-      localStorage.setItem(
-        "dm-voice",
-        event.target.checked
-          ? "1"
-          : "0"
-      );
+        localStorage.setItem(
+          "dm-voice",
+          e.target.checked
+            ? "1"
+            : "0"
+        );
 
-    }
-  );
+      }
+    );
 }
 
 
@@ -2239,92 +2438,94 @@ if ($("count")) {
     String(settings.count);
 
 
-  $("count").addEventListener(
-    "change",
-    event => {
+  $("count")
+    .addEventListener(
+      "change",
+      e => {
 
-      settings.count =
-        Number(
-          event.target.value
+        settings.count =
+          Number(
+            e.target.value
+          );
+
+
+        localStorage.setItem(
+          "dm-count",
+          settings.count
         );
 
-
-      localStorage.setItem(
-        "dm-count",
-        settings.count
-      );
-
-    }
-  );
+      }
+    );
 }
 
 
-/* =========================================================
-   BORRAR TODAS LAS ESCENAS
-========================================================= */
+/* =========================
+   BORRAR TODO
+========================= */
 
 if ($("deleteAll")) {
 
-  $("deleteAll").addEventListener(
-    "click",
-    async () => {
+  $("deleteAll")
+    .addEventListener(
+      "click",
+      async () => {
 
-      if (
-        !confirm(
-          "¿Borrar todas tus escenas?"
-        )
-      ) {
-        return;
-      }
-
-
-      await new Promise(
-        (resolve, reject) => {
-
-          const request =
-            store("readwrite")
-              .clear();
-
-
-          request.onsuccess =
-            resolve;
-
-
-          request.onerror =
-            reject;
-
+        if (
+          !confirm(
+            "¿Borrar todas tus escenas?"
+          )
+        ) {
+          return;
         }
-      );
 
 
-      scenes = [];
+        await new Promise(
+          (resolve, reject) => {
+
+            const r =
+              store(
+                "readwrite"
+              ).clear();
 
 
-      renderLibrary();
+            r.onsuccess =
+              resolve;
 
 
-      renderScenes();
+            r.onerror =
+              reject;
+
+          }
+        );
 
 
-      toast(
-        "Biblioteca borrada."
-      );
+        scenes =
+          [];
 
-    }
-  );
+
+        renderLibrary();
+
+        renderScenes();
+
+
+        toast(
+          "Biblioteca borrada."
+        );
+
+      }
+    );
 }
 
 
-/* =========================================================
+/* =========================
    TECLADO
-========================================================= */
+========================= */
 
 document.addEventListener(
   "keydown",
-  event => {
+  e => {
 
     if (
-      !$("gameView") ||
       !$("gameView")
         .classList
         .contains("active")
@@ -2333,96 +2534,108 @@ document.addEventListener(
     }
 
 
-    if (event.key === "ArrowLeft") {
+    if (
+      e.key === "ArrowLeft"
+    ) {
 
-      $("prevBtn")?.click();
+      $("prevBtn").click();
     }
 
 
-    if (event.key === "ArrowRight") {
+    if (
+      e.key === "ArrowRight"
+    ) {
 
-      $("nextBtn")?.click();
+      $("nextBtn").click();
     }
 
 
-    if (event.code === "Space") {
+    if (
+      e.code === "Space"
+    ) {
 
-      event.preventDefault();
+      e.preventDefault();
 
-      $("startBtn")?.click();
+      $("startBtn").click();
     }
 
   }
 );
 
 
-/* =========================================================
-   MANEJO DEL VIDEO
-========================================================= */
+/* =========================
+   EVENTOS DEL VIDEO
+========================= */
 
 if ($("video")) {
 
-  $("video").addEventListener(
-    "play",
-    () => {
+  $("video")
+    .addEventListener(
+      "play",
+      () => {
 
-      if (gameStarted) {
+        if (gameStarted) {
 
-        $("startBtn").textContent =
-          "⏸️ PAUSAR";
+          $("startBtn")
+            .textContent =
+            "⏸️ PAUSAR";
+        }
+
       }
-
-    }
-  );
+    );
 
 
-  $("video").addEventListener(
-    "pause",
-    () => {
+  $("video")
+    .addEventListener(
+      "pause",
+      () => {
 
-      if (gameStarted) {
+        if (gameStarted) {
 
-        $("startBtn").textContent =
-          "▶️ CONTINUAR";
+          $("startBtn")
+            .textContent =
+            "▶️ CONTINUAR";
+        }
+
       }
-
-    }
-  );
+    );
 
 
-  $("video").addEventListener(
-    "ended",
-    () => {
+  $("video")
+    .addEventListener(
+      "ended",
+      () => {
 
-      if (
-        currentScene &&
-        gameStarted
-      ) {
+        if (
+          currentScene &&
+          gameStarted
+        ) {
 
-        finishGame();
+          finishGame();
+        }
+
       }
-
-    }
-  );
+    );
 
 
-  $("video").addEventListener(
-    "error",
-    () => {
+  $("video")
+    .addEventListener(
+      "error",
+      () => {
 
-      console.error(
-        "Video error:",
-        $("video").error
-      );
+        console.error(
+          "Error del video:",
+          $("video").error
+        );
 
-    }
-  );
+      }
+    );
 }
 
 
-/* =========================================================
+/* =========================
    INICIO
-========================================================= */
+========================= */
 
 async function init() {
 
@@ -2446,11 +2659,11 @@ async function init() {
 
   }
 
-  catch (error) {
+  catch (err) {
 
     console.error(
-      "Error iniciando aplicación:",
-      error
+      "Error iniciando:",
+      err
     );
 
 
